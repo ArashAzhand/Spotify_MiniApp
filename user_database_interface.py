@@ -12,31 +12,29 @@ def connect_to_db():
 
 
 
-def insert_user(user_name, password, birth_year, email, location):
+def insert_user(user_name, password, birth_year, email, location, isartist):
     try:
         conn = connect_to_db()
         cursor = conn.cursor()
         cursor.execute("""
-            EXEC InsertUser ?, ?, ?, ?, ?
-        """, (user_name, password, birth_year, email, location))
+            EXEC InsertUser ?, ?, ?, ?, ?, ?
+        """, (user_name, password, birth_year, email, location, isartist))
         conn.commit()
         cursor.close()
         conn.close()
-        messagebox.showinfo("Success", "User inserted successfully!")
     except Exception as e:
         messagebox.showerror("Error", str(e))
 
-def update_user(user_name, password, birth_year, email, location):
+def update_user(user_id, user_name, password, birth_year, email, country_id):
     try:
         conn = connect_to_db()
         cursor = conn.cursor()
         cursor.execute("""
-            EXEC UpdateUser ?, ?, ?, ?, ?
-        """, (user_name, password, birth_year, email, location))
+            EXEC UpdateUser ?, ?, ?, ?, ?, ?
+        """, (user_id, user_name, password, birth_year, email, country_id))
         conn.commit()
         cursor.close()
         conn.close()
-        messagebox.showinfo("Success", "User updated successfully!")
     except Exception as e:
         messagebox.showerror("Error", str(e))
 
@@ -50,6 +48,5 @@ def delete_user(user_id):
         conn.commit()
         cursor.close()
         conn.close()
-        messagebox.showinfo("Success", "User deleted successfully!")
     except Exception as e:
         messagebox.showerror("Error", str(e))

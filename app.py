@@ -1,14 +1,21 @@
-import tkinter as tk
+import customtkinter as ctk
 from tkinter import messagebox
 from user_database_interface import *
 from user_page import *
 import pyodbc
 
+ctk.set_appearance_mode("dark")  
+ctk.set_default_color_theme("dark-blue")  
+
+SPOTIFY_GREEN = "#1DB954"
+SPOTIFY_BLACK = "#121212"
+SPOTIFY_GRAY = "#212121"
+SPOTIFY_WHITE = "#FFFFFF"
 
 def connect_to_db():
     conn = pyodbc.connect(
         'DRIVER={SQL Server};'
-        'SERVER=LAPTOP-KE2OAO1H;' #select @@SERVERNAME
+        'SERVER=LAPTOP-KE2OAO1H;'
         'DATABASE=temp_spotify;'
         'Trusted_Connection=yes;',
         autocommit=True
@@ -16,79 +23,110 @@ def connect_to_db():
     return conn
 
 
+
 def open_user_window(username):
-    root = tk.Tk()
-    root.title("User Page")
+    root = ctk.CTk()
+    root.title("Spotify - User Page")
     root.geometry("800x600")
+    root.configure(fg_color=SPOTIFY_BLACK)
 
     def return_to_login():
         root.destroy()
         main_login_window()
 
-    create_user_page(root, username, return_to_login)
+    def reset_user_page():
+        root.destroy()
+        open_user_window(username)
+
+    create_user_page(root, username, return_to_login, reset_user_page, 0)
+
+    root.mainloop()
+    
+def open_artist_window(username):
+    root = ctk.CTk()
+    root.title("Spotify - Artist Page")
+    root.geometry("800x600")
+    root.configure(fg_color=SPOTIFY_BLACK)
+
+    def return_to_login():
+        root.destroy()
+        main_login_window()
+
+    def reset_user_page():
+        root.destroy()
+        open_artist_window(username)
+
+    create_user_page(root, username, return_to_login, reset_user_page, 1)
 
     root.mainloop()
 
-
-
-
-
-def open_singer_window():
-    singer_window = tk.Tk()
-    singer_window.title("Singer Window")
-    singer_window.geometry("300x200")
-
-    singer_label = tk.Label(singer_window, text="Welcome, Singer!")
-    singer_label.pack(pady=20)
-
-    singer_window.mainloop()
-
-
-
-
 def create_user_account_window():
     def create_account():
-        new_username = new_username_entry.get()
-        new_password = new_password_entry.get()
-        b_y = new_BirthYear_entry.get()
-        email = new_Email_entry.get()
-        loc = new_Location_entry.get()
+        new_username = entries["username"].get()
+        new_password = entries["password"].get()
+        b_y = entries["birth_year"].get()
+        email = entries["email"].get()
+        country_name = country_var.get()
+        role = role_var.get()
+        
+        country_id = country_dict.get(country_name)
+        
+        if role == "User":
+            role = 0
+        else:
+            role = 1
 
-        insert_user(new_username, new_password, b_y, email, loc)
+        insert_user(new_username, new_password, b_y, email, country_id, role)
+        messagebox.showinfo("Account Created", "Your account has been successfully created!")
         account_window.destroy()
 
+    account_window = ctk.CTk()
+    account_window.title("Spotify - Create New Account")
+    account_window.geometry("400x700")
+    account_window.configure(fg_color=SPOTIFY_BLACK)
 
-    account_window = tk.Tk()
-    account_window.title("Create New Account")
-    account_window.geometry("300x250")
+    frame = ctk.CTkFrame(account_window, fg_color=SPOTIFY_GRAY)
+    frame.pack(pady=20, padx=20, fill="both", expand=True)
 
-    new_username_label = tk.Label(account_window, text="New Username")
-    new_username_label.grid(row=1, column=0, pady=5)
-    new_username_entry = tk.Entry(account_window)
-    new_username_entry.grid(row=1, column=1, pady=5)
+    title_label = ctk.CTkLabel(frame, text="Create Your Spotify Account", font=("Helvetica", 20, "bold"), text_color=SPOTIFY_WHITE)
+    title_label.pack(pady=20)
 
-    new_password_label = tk.Label(account_window, text="New Password")
-    new_password_label.grid(row=2, column=0, pady=5)
-    new_password_entry = tk.Entry(account_window, show="*")
-    new_password_entry.grid(row=2, column=1, pady=5)
+    fields = [("Username", "username"), ("Password", "password"), ("Birth Year", "birth_year"),
+              ("Email", "email")]
 
-    new_BirthYear_label = tk.Label(account_window, text="BirthYear")
-    new_BirthYear_label.grid(row=3, column=0, pady=5)
-    new_BirthYear_entry = tk.Entry(account_window)
-    new_BirthYear_entry.grid(row=3, column=1, pady=5)
+    entries = {}
+    for text, name in fields:
+        label = ctk.CTkLabel(frame, text=text, text_color=SPOTIFY_WHITE)
+        label.pack(pady=5)
+        entry = ctk.CTkEntry(frame, width=300, placeholder_text=f"Enter your {text.lower()}")
+        entry.pack(pady=5)
+        entries[name] = entry
 
-    new_Email_label = tk.Label(account_window, text="Email")
-    new_Email_label.grid(row=4, column=0, pady=5)
-    new_Email_entry = tk.Entry(account_window)
-    new_Email_entry.grid(row=4, column=1, pady=5)
+    country_dict = {
+        "Australia": 4,
+        "Brazil": 8,
+        "France": 6,
+        "Germany": 5,
+        "Iran": 3,
+        "Japan": 7,
+        "United Kingdom": 2,
+        "United States": 1
+    }
 
-    new_Location_label = tk.Label(account_window, text="Location")
-    new_Location_label.grid(row=5, column=0, pady=5)
-    new_Location_entry = tk.Entry(account_window)
-    new_Location_entry.grid(row=5, column=1, pady=5)
+    country_var = ctk.StringVar(value="United States")
+    country_label = ctk.CTkLabel(frame, text="Country", text_color=SPOTIFY_WHITE)
+    country_label.pack(pady=5)
+    country_menu = ctk.CTkOptionMenu(frame, variable=country_var, values=list(country_dict.keys()))
+    country_menu.pack(pady=5)
 
-    create_account_button = tk.Button(account_window, text="Create Account", command=create_account)
-    create_account_button.grid(row=6,column=1,pady=20)
+    role_var = ctk.StringVar(value="User")
+    role_label = ctk.CTkLabel(frame, text="Role", text_color=SPOTIFY_WHITE)
+    role_label.pack(pady=5)
+    role_menu = ctk.CTkOptionMenu(frame, variable=role_var, values=["User", "Artist"])
+    role_menu.pack(pady=5)
+
+    create_account_button = ctk.CTkButton(frame, text="CREATE ACCOUNT", command=create_account, fg_color=SPOTIFY_GREEN, hover_color="#1ED760")
+    create_account_button.pack(pady=20)
 
     account_window.mainloop()
 
@@ -96,94 +134,70 @@ def main_login_window():
     def check_login():
         username = username_entry.get()
         password = password_entry.get()
-        role = role_var.get()
+        
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
 
-        if role == "User":
-            try:
-                conn = connect_to_db()
-                cursor = conn.cursor()
+            query = """
+            SELECT * FROM Users 
+            WHERE username = ? AND password = ?
+            """
+            cursor.execute(query, (username, password))
+            user = cursor.fetchone()
 
-                query = """
-                SELECT * FROM Users 
-                WHERE username = ? AND password = ?
-                """
-                cursor.execute(query, (username, password))
+            cursor.execute("""
+                            select IsArtist
+                            from Users
+                            where username = ?
+                            """, username)
+            role = cursor.fetchone()
 
-                user = cursor.fetchone()
-                cursor.close()
-                conn.close()
-                
-                if user:
-                    messagebox.showinfo("Login succesfull", f"wellcome {username}")
+            cursor.close()
+            conn.close()
+            if user:
+                if role[0]: # Aartist
+                    messagebox.showinfo("Login successful", f"Welcome {username}")
+                    login_window.destroy()
+                    open_artist_window(username)
+                else: # User
+                    messagebox.showinfo("Login successful", f"Welcome {username}")
                     login_window.destroy()
                     open_user_window(username)
-                else:
-                    messagebox.showerror("Login failed", "Invalid username or password!")
-            
-            except Exception as e:
-                messagebox.showerror("Database Error", f"An error occurred: {str(e)}")
-                return False
+            else:
+                messagebox.showerror("Login failed", "Invalid username or password!")
+        
+        except Exception as e:
+            messagebox.showerror("Database Error", f"An error occurred: {str(e)}")
+            return False
 
-        else:
-            try:
-                conn = connect_to_db()
-                cursor = conn.cursor()
-                
+    login_window = ctk.CTk()
+    login_window.title("Spotify Login")
+    login_window.geometry("400x500")
+    login_window.configure(fg_color=SPOTIFY_BLACK)
 
-                query = """
-                SELECT * FROM Artists 
-                WHERE ArtistName = ? AND Password = ?
-                """
-                cursor.execute(query, (username, password))
+    frame = ctk.CTkFrame(login_window, fg_color=SPOTIFY_GRAY)
+    frame.pack(pady=20, padx=20, fill="both", expand=True)
 
-                user = cursor.fetchone()
-                cursor.close()
-                conn.close()
+    title_label = ctk.CTkLabel(frame, text="Log in to Spotify", font=("Helvetica", 24, "bold"), text_color=SPOTIFY_WHITE)
+    title_label.pack(pady=20)
 
-                if user:
-                    messagebox.showinfo("login succesful", f"wellcome {username}")                     
-                    login_window.destroy()    
-                    open_singer_window(username)
-                else:
-                    messagebox.showerror("Login failed", "Invalid artistname or password!")
+    username_entry = ctk.CTkEntry(frame, width=300, placeholder_text="Username")
+    username_entry.pack(pady=10)
 
-            except Exception as e:
-                messagebox.showerror("Database Error", f"An error occurred: {str(e)}")
-                return False
+    password_entry = ctk.CTkEntry(frame, width=300, show="*", placeholder_text="Password")
+    password_entry.pack(pady=10)
 
-
-
-    login_window = tk.Tk()
-    login_window.title("Login Window")
-    login_window.geometry("300x300")
-
-    username_label = tk.Label(login_window, text="Username")
-    username_label.pack(pady=5)
-    username_entry = tk.Entry(login_window)
-    username_entry.pack(pady=5)
-
-    password_label = tk.Label(login_window, text="Password")
-    password_label.pack(pady=5)
-    password_entry = tk.Entry(login_window, show="*")
-    password_entry.pack(pady=5)
-
-    role_var = tk.StringVar(value="User")
-    user_check = tk.Radiobutton(login_window, text="User", variable=role_var, value="User")
-    user_check.pack(pady=5)
-    singer_check = tk.Radiobutton(login_window, text="Singer", variable=role_var, value="Singer")
-    singer_check.pack(pady=5)
-
-    login_button = tk.Button(login_window, text="Login", command=check_login)
+    login_button = ctk.CTkButton(frame, text="LOG IN", command=check_login, fg_color=SPOTIFY_GREEN, hover_color="#1ED760")
     login_button.pack(pady=20)
 
-
-
-
-    create_account_button = tk.Button(login_window, text="Create New User Account", command=create_user_account_window)
+    create_account_button = ctk.CTkButton(frame, text="Don't have an account? Sign up", 
+                                          command=create_user_account_window, fg_color="transparent", 
+                                          text_color=SPOTIFY_GREEN, hover_color=SPOTIFY_GRAY)
     create_account_button.pack(pady=10)
 
     login_window.mainloop()
 
+if __name__ == "__main__":
+   main_login_window()
 
-# main_login_window()
-open_user_window("arash")
